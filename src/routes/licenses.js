@@ -63,9 +63,11 @@ router.post('/deactivate', activationLimiter, (req, res) => {
  * POST /api/v1/license/validate
  * Validate a license (check if valid and activated for domain)
  * Rate limited: 60 per minute per IP+domain
+ * 
+ * Optional: product_slug to verify license is for correct product
  */
 router.post('/validate', validationLimiter, (req, res) => {
-  const { license_key, domain, token } = req.body;
+  const { license_key, domain, token, product_slug } = req.body;
   
   if (!license_key || !domain) {
     return res.status(400).json({
@@ -75,7 +77,7 @@ router.post('/validate', validationLimiter, (req, res) => {
     });
   }
   
-  const result = licenseService.validateLicense(license_key, domain, token);
+  const result = licenseService.validateLicense(license_key, domain, token, product_slug);
   
   res.status(result.valid ? 200 : 400).json(result);
 });

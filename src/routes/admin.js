@@ -42,14 +42,25 @@ router.use(requireAdmin);
  * Create a new license
  */
 router.post('/licenses', (req, res) => {
-  const { email, plan, max_activations, expires_at, metadata } = req.body;
+  const { email, plan, max_activations, expires_at, metadata, product_id, product_slug } = req.body;
   
   if (!email) {
     return res.status(400).json({ error: 'email is required' });
   }
   
+  // Resolve product_id from slug if provided
+  let resolvedProductId = product_id;
+  if (!resolvedProductId && product_slug) {
+    const db = getDb();
+    const product = db.prepare('SELECT id FROM products WHERE slug = ?').get(product_slug);
+    if (product) {
+      resolvedProductId = product.id;
+    }
+  }
+  
   try {
     const license = licenseService.createLicense({
+      productId: resolvedProductId || null,
       email,
       plan: plan || 'standard',
       maxActivations: max_activations || 1,

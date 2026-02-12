@@ -35,18 +35,35 @@ export function getDb() {
 export async function initDatabase() {
   const db = getDb();
 
+  // Products table (for multi-plugin support)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS products (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      slug TEXT UNIQUE NOT NULL,
+      name TEXT NOT NULL,
+      description TEXT,
+      current_version TEXT DEFAULT '1.0.0',
+      download_url TEXT,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
   // Licenses table
   db.exec(`
     CREATE TABLE IF NOT EXISTS licenses (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       license_key TEXT UNIQUE NOT NULL,
+      product_id INTEGER,
       email TEXT NOT NULL,
       plan TEXT NOT NULL DEFAULT 'standard',
       max_activations INTEGER NOT NULL DEFAULT 1,
       expires_at TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-      metadata TEXT
+      metadata TEXT,
+      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
     )
   `);
 
@@ -83,8 +100,10 @@ export async function initDatabase() {
 
   // Create indexes
   db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_products_slug ON products(slug);
     CREATE INDEX IF NOT EXISTS idx_licenses_key ON licenses(license_key);
     CREATE INDEX IF NOT EXISTS idx_licenses_email ON licenses(email);
+    CREATE INDEX IF NOT EXISTS idx_licenses_product ON licenses(product_id);
     CREATE INDEX IF NOT EXISTS idx_activations_license ON activations(license_id);
     CREATE INDEX IF NOT EXISTS idx_activations_domain ON activations(domain);
     CREATE INDEX IF NOT EXISTS idx_audit_license ON audit_log(license_id);

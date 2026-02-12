@@ -30,17 +30,18 @@ export function generateLicenseKey() {
 /**
  * Create a new license
  */
-export function createLicense({ email, plan = 'standard', maxActivations = 1, expiresAt = null, metadata = null }) {
+export function createLicense({ productId = null, email, plan = 'standard', maxActivations = 1, expiresAt = null, metadata = null }) {
   const db = getDb();
   const licenseKey = generateLicenseKey();
   
   const stmt = db.prepare(`
-    INSERT INTO licenses (license_key, email, plan, max_activations, expires_at, metadata)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO licenses (license_key, product_id, email, plan, max_activations, expires_at, metadata)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
   
   const result = stmt.run(
     licenseKey,
+    productId,
     email,
     plan,
     maxActivations,
@@ -48,11 +49,12 @@ export function createLicense({ email, plan = 'standard', maxActivations = 1, ex
     metadata ? JSON.stringify(metadata) : null
   );
   
-  logAudit(result.lastInsertRowid, 'created', null, null, { email, plan });
+  logAudit(result.lastInsertRowid, 'created', null, null, { email, plan, productId });
   
   return {
     id: result.lastInsertRowid,
     licenseKey,
+    productId,
     email,
     plan,
     maxActivations,
@@ -246,13 +248,26 @@ export function deactivateLicense(licenseKey, domain, ipAddress = null) {
 }
 
 /**
- * Validate a license (with optional token verification)
+ * Validate a license (with optional token verification and product check)
  */
-export function validateLicense(licenseKey, domain, token = null) {
+export function validateLicense(licenseKey, domain, token = null, productSlug = null) {
   const license = getLicenseByKey(licenseKey);
   
   if (!license) {
     return { valid: false, error: 'invalid_key', message: 'License key not found' };
+  }
+  
+  // Check product match if productSlug provided
+  if (productSlug && license.product_id) {
+    const db = getDb();
+    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(license.product_id);
+    if (product && product.slug !== productSlug) {
+      return { 
+        valid: false, 
+        error: 'product_mismatch', 
+        message: `License is for ${product.name}, not ${productSlug}` 
+      };
+    }
   }
   
   // Check expiration
@@ -284,6 +299,20 @@ export function validateLicense(licenseKey, domain, token = null) {
     }
   }
   
+  // Get product info if available
+  let productInfo = null;
+  if (license.product_id) {
+    const db = getDb();
+    const product = db.prepare('SELECT slug, name, current_version FROM products WHERE id = ?').get(license.product_id);
+    if (product) {
+      productInfo = {
+        slug: product.slug,
+        name: product.name,
+        latestVersion: product.current_version
+      };
+    }
+  }
+  
   return {
     valid: true,
     license: {
@@ -293,6 +322,7 @@ export function validateLicense(licenseKey, domain, token = null) {
       maxActivations: license.max_activations,
       currentActivations: activations.length
     },
+    product: productInfo,
     activation: {
       domain: activation.domain,
       activatedAt: activation.activated_at
