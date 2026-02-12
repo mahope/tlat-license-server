@@ -145,11 +145,25 @@ For production:
 4. Use reverse proxy (nginx) with HTTPS
 5. Set `ALLOWED_ORIGINS` to your domain(s)
 
-### Docker (coming soon)
+### Docker
 
-```dockerfile
-# Dockerfile TBD
+```bash
+# Build
+docker build -t tlat-license-server .
+
+# Run with docker-compose
+docker-compose up -d
+
+# Or standalone
+docker run -d \
+  -p 3100:3100 \
+  -e JWT_SECRET=your-secret \
+  -e ADMIN_API_KEY=your-admin-key \
+  -v license-data:/app/data \
+  tlat-license-server
 ```
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for full Dokploy deployment guide.
 
 ### Systemd service
 
