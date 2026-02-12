@@ -14,6 +14,7 @@ import { initDatabase } from './db/init.js';
 import licenseRoutes from './routes/licenses.js';
 import adminRoutes from './routes/admin.js';
 import productRoutes from './routes/products.js';
+import webhookRoutes from './routes/webhooks.js';
 import { errorHandler, notFoundHandler } from './middleware/errors.js';
 import { requestLogger } from './middleware/logger.js';
 import { generalLimiter } from './middleware/rate-limit.js';
@@ -51,6 +52,7 @@ app.get('/health', (req, res) => {
 app.use('/api/v1/license', licenseRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/admin/products', productRoutes);
+app.use('/api/v1/webhooks', webhookRoutes);
 
 // Error handling
 app.use(notFoundHandler);
