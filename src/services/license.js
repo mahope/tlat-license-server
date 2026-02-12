@@ -82,7 +82,42 @@ export function getActiveActivations(licenseId) {
 }
 
 /**
+ * Check if a domain is a development/staging environment
+ * These don't count toward the activation limit
+ */
+export function isDevEnvironment(domain) {
+  if (!domain) return false;
+  const d = domain.toLowerCase();
+  
+  // Localhost and local IPs
+  if (d === 'localhost' || d === '127.0.0.1' || d.startsWith('192.168.') || d.startsWith('10.')) {
+    return true;
+  }
+  
+  // Common local/dev TLDs
+  if (d.endsWith('.local') || d.endsWith('.test') || d.endsWith('.localhost') || d.endsWith('.dev')) {
+    return true;
+  }
+  
+  // Staging/dev subdomains
+  if (d.startsWith('staging.') || d.startsWith('dev.') || d.startsWith('test.') || d.startsWith('local.')) {
+    return true;
+  }
+  if (d.includes('.staging.') || d.includes('.dev.') || d.includes('.test.')) {
+    return true;
+  }
+  
+  // Common dev hosting patterns
+  if (d.includes('.localwp.') || d.includes('.lndo.') || d.includes('.ddev.')) {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
  * Activate a license for a domain
+ * Dev/staging environments don't count toward activation limit
  */
 export function activateLicense(licenseKey, domain, siteInfo = {}) {
   const db = getDb();
@@ -117,17 +152,25 @@ export function activateLicense(licenseKey, domain, siteInfo = {}) {
       success: true,
       message: 'License already activated for this domain',
       activation: existingActivation,
-      token: generateToken(license, domain)
+      token: generateToken(license, domain),
+      isDevEnvironment: isDevEnvironment(domain)
     };
   }
   
-  // Check activation limit
-  if (activations.length >= license.max_activations) {
+  // Check activation limit (dev environments don't count)
+  const isDev = isDevEnvironment(domain);
+  const productionActivations = activations.filter(a => !isDevEnvironment(a.domain));
+  
+  if (!isDev && productionActivations.length >= license.max_activations) {
     return { 
       success: false, 
       error: 'limit_reached', 
-      message: `Maximum activations (${license.max_activations}) reached`,
-      activations: activations.map(a => ({ domain: a.domain, activatedAt: a.activated_at }))
+      message: `Maximum production activations (${license.max_activations}) reached. Dev/staging environments are unlimited.`,
+      activations: activations.map(a => ({ 
+        domain: a.domain, 
+        activatedAt: a.activated_at,
+        isDevEnvironment: isDevEnvironment(a.domain)
+      }))
     };
   }
   
@@ -147,16 +190,24 @@ export function activateLicense(licenseKey, domain, siteInfo = {}) {
   
   logAudit(license.id, 'activated', domain, siteInfo.ipAddress, siteInfo);
   
+  // Calculate remaining (only count production activations)
+  const newProductionCount = isDev ? productionActivations.length : productionActivations.length + 1;
+  
   return {
     success: true,
-    message: 'License activated successfully',
+    message: isDev 
+      ? 'License activated for development environment (doesn\'t count toward limit)'
+      : 'License activated successfully',
     activation: {
       id: result.lastInsertRowid,
       domain,
-      activatedAt: new Date().toISOString()
+      activatedAt: new Date().toISOString(),
+      isDevEnvironment: isDev
     },
     token: generateToken(license, domain),
-    remaining: license.max_activations - activations.length - 1
+    remaining: license.max_activations - newProductionCount,
+    productionActivations: newProductionCount,
+    devActivations: activations.filter(a => isDevEnvironment(a.domain)).length + (isDev ? 1 : 0)
   };
 }
 
@@ -327,5 +378,6 @@ export default {
   activateLicense,
   deactivateLicense,
   validateLicense,
-  recordHeartbeat
+  recordHeartbeat,
+  isDevEnvironment
 };
