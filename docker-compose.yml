@@ -1,0 +1,28 @@
+# docker-compose.yml for TLAT License Server
+# Use with Dokploy or standalone deployment
+
+services:
+  license-server:
+    build: .
+    container_name: tlat-license-server
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    environment:
+      - NODE_ENV=production
+      - PORT=3100
+      - JWT_SECRET=${JWT_SECRET}
+      - ADMIN_API_KEY=${ADMIN_API_KEY}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-https://tutor-tracking.com,https://*.tutor-tracking.com}
+      - DB_PATH=/app/data/licenses.db
+    volumes:
+      - license-data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3100/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  license-data:
+    driver: local

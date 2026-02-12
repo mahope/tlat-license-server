@@ -1,0 +1,31 @@
+# Dependencies
+node_modules
+
+# Development files
+.env
+.env.local
+.env.*.local
+
+# Data (separate volume)
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Docs
+README.md
+docs/
+
+# Tests
+tests/
+*.test.js
