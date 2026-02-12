@@ -15,6 +15,7 @@ import licenseRoutes from './routes/licenses.js';
 import adminRoutes from './routes/admin.js';
 import { errorHandler, notFoundHandler } from './middleware/errors.js';
 import { requestLogger } from './middleware/logger.js';
+import { generalLimiter } from './middleware/rate-limit.js';
 
 const app = express();
 const PORT = process.env.PORT || 3100;
@@ -36,6 +37,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Request logging
 app.use(requestLogger);
+
+// General rate limiting (skips /health)
+app.use(generalLimiter);
 
 // Health check
 app.get('/health', (req, res) => {

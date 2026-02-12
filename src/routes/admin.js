@@ -8,8 +8,12 @@
 import { Router } from 'express';
 import * as licenseService from '../services/license.js';
 import { getDb } from '../db/init.js';
+import { adminLimiter } from '../middleware/rate-limit.js';
 
 const router = Router();
+
+// Apply rate limiting to all admin routes
+router.use(adminLimiter);
 
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY || 'dev-admin-key';
 

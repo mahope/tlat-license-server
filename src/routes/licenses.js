@@ -6,14 +6,16 @@
 
 import { Router } from 'express';
 import * as licenseService from '../services/license.js';
+import { activationLimiter, validationLimiter } from '../middleware/rate-limit.js';
 
 const router = Router();
 
 /**
  * POST /api/v1/license/activate
  * Activate a license for a domain
+ * Rate limited: 10 per hour per IP+domain
  */
-router.post('/activate', (req, res) => {
+router.post('/activate', activationLimiter, (req, res) => {
   const { license_key, domain, site_url, wp_version, plugin_version } = req.body;
   
   if (!license_key || !domain) {
@@ -38,8 +40,9 @@ router.post('/activate', (req, res) => {
 /**
  * POST /api/v1/license/deactivate
  * Deactivate a license for a domain
+ * Rate limited: 10 per hour per IP+domain
  */
-router.post('/deactivate', (req, res) => {
+router.post('/deactivate', activationLimiter, (req, res) => {
   const { license_key, domain } = req.body;
   
   if (!license_key || !domain) {
@@ -59,8 +62,9 @@ router.post('/deactivate', (req, res) => {
 /**
  * POST /api/v1/license/validate
  * Validate a license (check if valid and activated for domain)
+ * Rate limited: 60 per minute per IP+domain
  */
-router.post('/validate', (req, res) => {
+router.post('/validate', validationLimiter, (req, res) => {
   const { license_key, domain, token } = req.body;
   
   if (!license_key || !domain) {
@@ -79,8 +83,9 @@ router.post('/validate', (req, res) => {
 /**
  * POST /api/v1/license/heartbeat
  * Record heartbeat from active installation
+ * Rate limited: 60 per minute per IP+domain
  */
-router.post('/heartbeat', (req, res) => {
+router.post('/heartbeat', validationLimiter, (req, res) => {
   const { license_key, domain, wp_version, plugin_version } = req.body;
   
   if (!license_key || !domain) {
@@ -102,8 +107,9 @@ router.post('/heartbeat', (req, res) => {
 /**
  * GET /api/v1/license/status
  * Quick status check for a license (requires X-License-Key header)
+ * Rate limited: 60 per minute per IP+domain
  */
-router.get('/status', (req, res) => {
+router.get('/status', validationLimiter, (req, res) => {
   const licenseKey = req.headers['x-license-key'];
   const domain = req.query.domain;
   

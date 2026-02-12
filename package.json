@@ -11,7 +11,11 @@
     "db:seed": "node scripts/seed-db.js",
     "test": "node --test tests/"
   },
-  "keywords": ["license-server", "wordpress", "tutor-lms"],
+  "keywords": [
+    "license-server",
+    "wordpress",
+    "tutor-lms"
+  ],
   "author": "Mahope",
   "license": "MIT",
   "dependencies": {
@@ -19,6 +23,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
+    "express-rate-limit": "^8.2.1",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "uuid": "^10.0.0"
