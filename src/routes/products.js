@@ -15,13 +15,24 @@ import {
 
 const router = Router();
 
-// Middleware: require admin API key
+// Middleware: require admin API key (supports both x-api-key and Bearer token)
 const requireAdmin = (req, res, next) => {
+  // Check x-api-key header first
   const apiKey = req.headers['x-api-key'];
-  if (!apiKey || apiKey !== process.env.ADMIN_API_KEY) {
-    return res.status(401).json({ error: 'unauthorized', message: 'Valid admin API key required' });
+  if (apiKey && apiKey === process.env.ADMIN_API_KEY) {
+    return next();
   }
-  next();
+  
+  // Fall back to Bearer token (for compatibility with admin routes)
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.slice(7);
+    if (token === process.env.ADMIN_API_KEY) {
+      return next();
+    }
+  }
+  
+  return res.status(401).json({ error: 'unauthorized', message: 'Valid admin API key required' });
 };
 
 router.use(requireAdmin);
