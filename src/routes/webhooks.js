@@ -6,6 +6,7 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import { createLicense } from '../services/license.js';
 import { getProductBySlug } from '../services/product.js';
+import { sendLicenseEmail } from '../services/email.js';
 
 const router = Router();
 
@@ -145,7 +146,24 @@ async function handleCheckoutCompleted(session) {
 
   console.log(`License created: ${license.licenseKey} for ${customerEmail}`);
   
-  // TODO: Send license key email to customer
+  // Send license key email to customer
+  try {
+    const emailResult = await sendLicenseEmail({
+      email: customerEmail,
+      licenseKey: license.licenseKey,
+      productName: product.name,
+      licenseType
+    });
+    
+    if (emailResult.success) {
+      console.log(`License email sent to ${customerEmail}`);
+    } else {
+      console.warn(`Failed to send license email to ${customerEmail}:`, emailResult);
+    }
+  } catch (emailError) {
+    // Don't fail the webhook if email fails - license is still created
+    console.error(`Email send error for ${customerEmail}:`, emailError);
+  }
 }
 
 /**

@@ -12,6 +12,8 @@ Node.js/Express + SQLite for simple self-hosted license management.
 - **Heartbeat tracking** for active installations
 - **Admin API** for license management
 - **Audit logging** for all license operations
+- **Stripe webhooks** for automatic license creation on purchase
+- **Email delivery** via Resend API (license keys, renewal reminders)
 - **Plans**: standard, pro, agency, lifetime
 
 ## Quick Start
@@ -112,6 +114,9 @@ curl -X POST http://localhost:3100/api/v1/admin/licenses \
 | `DB_PATH` | SQLite database path | ./data/licenses.db |
 | `ADMIN_API_KEY` | Admin API key | dev-admin-key |
 | `ALLOWED_ORIGINS` | CORS origins (comma-sep) | * |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | (optional) |
+| `RESEND_API_KEY` | Resend.com API key for emails | (optional) |
+| `EMAIL_FROM` | Sender email | licenses@tutor-tracking.com |
 
 ## Database Schema
 
