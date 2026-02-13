@@ -223,4 +223,80 @@ Renew to keep your advanced analytics running and continue receiving updates.
   });
 }
 
-export default { sendLicenseEmail, sendRenewalReminder };
+/**
+ * Send magic link for customer portal access
+ */
+export async function sendPortalMagicLink({ email, portalLink }) {
+  const subject = 'Your Tutor LMS Advanced Tracking Portal Access';
+  
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+    <h1 style="color: white; margin: 0; font-size: 24px;">🔐 Portal Access</h1>
+  </div>
+  
+  <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+    <p style="font-size: 16px; margin-bottom: 20px;">
+      Click the button below to access your license dashboard:
+    </p>
+    
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${portalLink}" 
+         style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+        Access My Licenses →
+      </a>
+    </div>
+    
+    <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 0 5px 5px 0;">
+      <p style="margin: 0; font-size: 14px;">
+        <strong>⏰ This link expires in 30 minutes</strong><br>
+        If you didn't request this, you can safely ignore this email.
+      </p>
+    </div>
+    
+    <p style="font-size: 14px; color: #666; margin-top: 20px;">
+      Can't click the button? Copy and paste this link:<br>
+      <a href="${portalLink}" style="color: #667eea; word-break: break-all; font-size: 12px;">${portalLink}</a>
+    </p>
+    
+    <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+    
+    <p style="color: #888; font-size: 12px; text-align: center; margin: 0;">
+      © ${new Date().getFullYear()} Tutor LMS Advanced Tracking<br>
+      Made with ❤️ by <a href="https://mahope.dk" style="color: #667eea;">Mahope</a>
+    </p>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  const text = `
+Portal Access
+
+Click the link below to access your license dashboard:
+
+${portalLink}
+
+This link expires in 30 minutes.
+If you didn't request this, you can safely ignore this email.
+
+---
+© ${new Date().getFullYear()} Tutor LMS Advanced Tracking
+Made with ❤️ by Mahope (https://mahope.dk)
+  `.trim();
+
+  return sendEmail({
+    to: email,
+    subject,
+    html,
+    text,
+  });
+}
+
+export default { sendLicenseEmail, sendRenewalReminder, sendPortalMagicLink };

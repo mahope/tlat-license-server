@@ -16,6 +16,7 @@ import adminRoutes from './routes/admin.js';
 import productRoutes from './routes/products.js';
 import webhookRoutes from './routes/webhooks.js';
 import updateRoutes from './routes/updates.js';
+import customerRoutes from './routes/customer.js';
 import { errorHandler, notFoundHandler } from './middleware/errors.js';
 import { requestLogger } from './middleware/logger.js';
 import { generalLimiter } from './middleware/rate-limit.js';
@@ -55,6 +56,7 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/admin/products', productRoutes);
 app.use('/api/v1/webhooks', webhookRoutes);
 app.use('/api/v1/update', updateRoutes);
+app.use('/api/v1/customer', customerRoutes);
 
 // Error handling
 app.use(notFoundHandler);
